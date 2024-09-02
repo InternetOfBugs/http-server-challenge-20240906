@@ -1,13 +1,7 @@
 import socket
+import threading
 
-def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!")
-
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    client_socket, client_address = server_socket.accept()  # wait for client
-    print("Client Address:", client_address)
-
+def handle_client(client_socket):
     request = client_socket.recv(1024).decode()
     request_lines = request.split('\n')
     path = request_lines[0].split()[1]  # Extract the path from the request
@@ -72,6 +66,19 @@ def main():
     # Close the client socket
     client_socket.close()
 
+def main():
+    # You can use print statements as follows for debugging, they'll be visible when running tests.
+    print("Logs from your program will appear here!")
+
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+
+    while True:
+        client_socket, client_address = server_socket.accept()  # wait for client
+        print("Client Address:", client_address)
+
+        # Create a new thread to handle the client
+        client_thread = threading.Thread(target=handle_client, args=(client_socket,))
+        client_thread.start()
 
 if __name__ == "__main__":
     main()
