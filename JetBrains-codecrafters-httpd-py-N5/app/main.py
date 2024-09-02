@@ -8,12 +8,11 @@ def main():
     client_socket, _ = server_socket.accept()  # wait for client
     try:
         data = client_socket.recv(1024).decode("utf-8")
-        request_line, headers, _ = data.split("\r\n\r\n", 1)
+        parts = data.split("\r\n\r\n", 1)
+        request_line = parts[0]
+        headers = parts[1] if len(parts) > 1 else ''
         url = request_line.split(" ")[1]
         headers_dict = dict(h.split(": ") for h in headers.split("\r\n"))
-
-        # print out the contents of the headers_dict for debugging
-        print(headers_dict)
 
         user_agent = headers_dict.get("User-Agent")
 
