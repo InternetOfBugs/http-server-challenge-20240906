@@ -8,14 +8,11 @@ def main():
     client_socket, client_address = server_socket.accept()  # wait for client
     print("Client Address:", client_address)
 
-    if client_address[1] == 4221:
-        request = client_socket.recv(1024).decode()
-        request_lines = request.split('\n')
-        path = request_lines[0].split()[1]  # Extract the path from the request
-        if path == '/':
-            client_socket.send(b'HTTP/1.1 200 OK\r\n\r\n')
-        else:
-            client_socket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
+    request = client_socket.recv(1024).decode()
+    request_lines = request.split('\n')
+    path = request_lines[0].split()[1]  # Extract the path from the request
+    if path == '/':
+        client_socket.send(b'HTTP/1.1 200 OK\r\n\r\n')
     else:
         client_socket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
     
