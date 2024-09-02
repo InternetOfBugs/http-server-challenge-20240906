@@ -36,6 +36,22 @@ def main():
             client_socket.send(b'\r\n'.join(headers))
         else:
             client_socket.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+    elif path.startswith('/echo/'):
+        # Extract the string from the path
+        string = path.split('/')[2]
+        response_body = string.encode()
+
+        # Set the headers
+        headers = [
+            b'HTTP/1.1 200 OK',
+            b'Content-Type: text/plain',
+            b'Content-Length: ' + str(len(response_body)).encode(),
+            b'',
+            response_body
+        ]
+
+        # Send the response
+        client_socket.send(b'\r\n'.join(headers))
     elif path == '/':
         response_body = b'Hello, World!'
 
@@ -51,11 +67,23 @@ def main():
         # Send the response
         client_socket.send(b'\r\n'.join(headers))
     else:
-        client_socket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
+        # Echo the request back to the client
+        response_body = request.encode()
+
+        # Set the headers
+        headers = [
+            b'HTTP/1.1 200 OK',
+            b'Content-Type: text/plain',
+            b'Content-Length: ' + str(len(response_body)).encode(),
+            b'',
+            response_body
+        ]
+
+        # Send the response
+        client_socket.send(b'\r\n'.join(headers))
 
     # Close the client socket
     client_socket.close()
-
 
 
 if __name__ == "__main__":
