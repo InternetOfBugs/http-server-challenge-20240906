@@ -1,5 +1,13 @@
 import socket  # noqa: F401
 import threading
+import os
+from argparse import ArgumentParser
+
+parser = ArgumentParser(description='A simple HTTP server')
+parser.add_argument('--directory', type=str, help='Directory for file storage')
+args = parser.parse_args()
+
+FILES_DIR = args.directory
 
 
 def handle_client(client_socket):
@@ -27,6 +35,16 @@ def handle_client(client_socket):
             response_body = url.split("/echo/")[1]
             response_headers = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(response_body)}\r\n\r\n"
             client_socket.sendall((response_headers + response_body).encode())
+
+        elif url.startswith("/files/"):
+            path = os.path.join(FILES_DIR, url.split("/files/")[1])
+            if os.path.isfile(path):
+                with open(path, "rb") as file:
+                    response_body = file.read()
+                response_headers = f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(response_body)}\r\n\r\n"
+                client_socket.sendall(response_headers.encode() + response_body)
+            else:
+                client_socket.sendall(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
         elif url == "/":
             client_socket.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
