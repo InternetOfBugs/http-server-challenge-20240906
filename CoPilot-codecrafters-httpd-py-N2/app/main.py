@@ -6,7 +6,8 @@ def main():
 
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
     client_socket, client_address = server_socket.accept()  # wait for client
-    
+    print("Client Address:", client_address)
+
     if client_address[1] == 4221:
         request = client_socket.recv(1024).decode()
         request_lines = request.split('\n')
