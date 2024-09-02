@@ -12,7 +12,8 @@ def main():
         request_line = parts[0]
         headers = parts[1] if len(parts) > 1 else ''
         url = request_line.split(" ")[1]
-        headers_dict = dict(h.split(": ") for h in headers.split("\r\n"))
+        headers = headers.split("\r\n")
+        headers_dict = {h.split(": ")[0]: h.split(": ")[1] for h in headers if ': ' in h}
 
         user_agent = headers_dict.get("User-Agent")
 
