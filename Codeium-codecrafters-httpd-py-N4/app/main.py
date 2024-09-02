@@ -10,7 +10,11 @@ def main():
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
 
     conn, addr = server_socket.accept()
-    conn.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+    request = conn.recv(1024)
+    if b"GET /" in request:
+        conn.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+    else:
+        conn.sendall(b'HTTP/1.1 404 Not Found\r\n\r\n')
     conn.close()
 
     server_socket.close() # close the server
