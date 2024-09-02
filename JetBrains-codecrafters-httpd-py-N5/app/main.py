@@ -8,8 +8,10 @@ def main():
     client_socket, _ = server_socket.accept()  # wait for client
     try:
         data = client_socket.recv(1024).decode("utf-8")
-        request_line, headers_str = data.split("\r\n\r\n", 1)
+        request_line, rest = data.split("\r\n", 1)
         url = request_line.split(" ")[1]
+
+        headers_str, _ = rest.split("\r\n\r\n", 1)
         headers = headers_str.split("\r\n")
         headers_dict = {h.split(": ")[0]: h.split(": ")[1] for h in headers if ': ' in h}
 
