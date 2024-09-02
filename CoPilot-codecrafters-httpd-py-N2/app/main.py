@@ -12,9 +12,11 @@ def main():
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
     client_socket, client_address = server_socket.accept()  # wait for client
     
-    # return 'HTTP/1.1 200 OK\r\n\r\n' to the client
     if client_address[1] == 4221:
-        client_socket.send(b'HTTP/1.1 200 OK\r\n\r\n')
+        if client_socket.recv(1024).decode().split()[1] == '/':
+            client_socket.send(b'HTTP/1.1 200 OK\r\n\r\n')
+        else:
+            client_socket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
     else:
         client_socket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
     
