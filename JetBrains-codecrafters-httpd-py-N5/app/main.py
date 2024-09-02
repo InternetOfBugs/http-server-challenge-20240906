@@ -15,6 +15,7 @@ def main():
 
         user_agent = headers_dict.get("User-Agent")
 
+        print(request_line)
         print(headers_dict)
 
         if url == "/user-agent" and user_agent:
