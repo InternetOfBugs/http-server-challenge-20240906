@@ -8,7 +8,7 @@ def main():
     client_socket, _ = server_socket.accept()  # wait for client
     try:
         data = client_socket.recv(1024).decode("utf-8")
-        request_line, headers, _ = data.split("\r\n\r\n")[0].split("\r\n", 1)
+        request_line, headers, _ = data.split("\r\n\r\n", 1)
         url = request_line.split(" ")[1]
         headers_dict = dict(h.split(": ") for h in headers.split("\r\n"))
         user_agent = headers_dict.get("User-Agent")
@@ -16,12 +16,12 @@ def main():
         if url == "/user-agent" and user_agent:
             response_body = user_agent
             response_headers = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(response_body)}\r\n\r\n"
-            client_socket.sendall(response_headers.encode() + response_body.encode())
+            client_socket.sendall((response_headers + response_body).encode())
 
         elif url.startswith("/echo/"):
             response_body = url.split("/echo/")[1]
             response_headers = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(response_body)}\r\n\r\n"
-            client_socket.sendall(response_headers.encode() + response_body.encode())
+            client_socket.sendall((response_headers + response_body).encode())
 
         elif url == "/":
             client_socket.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
