@@ -17,6 +17,8 @@ def main():
 
         user_agent = headers_dict.get("User-Agent")
 
+        print(headers_dict)
+
         if url == "/user-agent" and user_agent:
             response_body = user_agent
             response_headers = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(response_body)}\r\n\r\n"
