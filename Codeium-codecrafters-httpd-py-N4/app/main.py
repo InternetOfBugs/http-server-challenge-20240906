@@ -18,8 +18,8 @@ def handle_request(conn, addr, files_dir):
                 conn.sendall(b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ' + bytes(str(len(user_agent)), 'utf-8') + b'\r\n\r\n' + user_agent)
     elif b"GET /files/" in request:
         filename = request.split()[1].split(b"/files/")[1]
-        if os.path.isfile(os.path.join(files_dir, filename)):
-            with open(os.path.join(files_dir, filename), 'rb') as f:
+        if os.path.isfile(os.path.join(files_dir, filename.decode('utf-8'))):
+            with open(os.path.join(files_dir, filename.decode('utf-8')), 'rb') as f:
                 file_contents = f.read()
             conn.sendall(b'HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ' + bytes(str(len(file_contents)), 'utf-8') + b'\r\n\r\n' + file_contents)
         else:
