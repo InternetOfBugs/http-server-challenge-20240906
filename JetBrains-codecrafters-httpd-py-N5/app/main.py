@@ -8,15 +8,16 @@ def main():
     client_socket, _ = server_socket.accept()  # wait for client
     try:
         data = client_socket.recv(1024).decode("utf-8")
-        request_line, headers_str = data.split("\r\n\r\n", 2)
+        request_line, headers_str = data.split("\r\n\r\n", 1)
         url = request_line.split(" ")[1]
         headers = headers_str.split("\r\n")
         headers_dict = {h.split(": ")[0]: h.split(": ")[1] for h in headers if ': ' in h}
 
         user_agent = headers_dict.get("User-Agent")
 
-        print(request_line)
-        print(headers_dict)
+        print(f"request_line: {request_line}")
+        print(f"headers_str: {headers_str}")
+        print(f"headers_dict: {headers_dict}")
 
         if url == "/user-agent" and user_agent:
             response_body = user_agent
