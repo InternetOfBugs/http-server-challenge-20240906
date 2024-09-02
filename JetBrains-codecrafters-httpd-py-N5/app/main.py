@@ -11,10 +11,11 @@ def main():
         request_line, headers, _ = data.split("\r\n\r\n", 1)
         url = request_line.split(" ")[1]
         headers_dict = dict(h.split(": ") for h in headers.split("\r\n"))
-        user_agent = headers_dict.get("User-Agent")
 
-
+        # print out the contents of the headers_dict for debugging
         print(headers_dict)
+
+        user_agent = headers_dict.get("User-Agent")
 
         if url == "/user-agent" and user_agent:
             response_body = user_agent
