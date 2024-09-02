@@ -28,6 +28,7 @@ def handle_request(conn, addr, files_dir):
         conn.sendall(b'HTTP/1.1 404 Not Found\r\n\r\n')
     conn.close()
 
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
