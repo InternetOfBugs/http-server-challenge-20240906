@@ -16,6 +16,12 @@ def main():
     elif b"GET /echo/" in request:
         string = request.split()[1].split(b"/echo/")[1]
         conn.sendall(b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ' + bytes(str(len(string)), 'utf-8') + b'\r\n\r\n' + string)
+    elif b"GET /user-agent" in request:
+        headers = request.split(b"\r\n")
+        for header in headers:
+            if header.startswith(b"User-Agent:"):
+                user_agent = header.split(b": ", 1)[1]
+                conn.sendall(b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ' + bytes(str(len(user_agent)), 'utf-8') + b'\r\n\r\n' + user_agent)
     else:
         conn.sendall(b'HTTP/1.1 404 Not Found\r\n\r\n')
     conn.close()
@@ -25,3 +31,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
