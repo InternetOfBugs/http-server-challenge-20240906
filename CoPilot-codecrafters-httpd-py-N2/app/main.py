@@ -8,7 +8,8 @@ def main():
     client_socket, client_address = server_socket.accept()  # wait for client
     
     if client_address[1] == 4221:
-        if client_socket.recv(1024).decode() == 'GET / HTTP/1.1':
+        request = client_socket.recv(1024).decode()
+        if request.startswith('GET / HTTP/1.1'):
             client_socket.send(b'HTTP/1.1 200 OK\r\n\r\n')
         else:
             client_socket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
