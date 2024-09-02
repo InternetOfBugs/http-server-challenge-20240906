@@ -12,22 +12,30 @@ def main():
     request_lines = request.split('\n')
     path = request_lines[0].split()[1]  # Extract the path from the request
 
-    if path.startswith('/echo/'):
-        # Extract the string from the path
-        string = path.split('/')[2]
-        response_body = string.encode()
+    if path == '/user-agent':
+        # Read the User-Agent header
+        user_agent = None
+        for line in request_lines:
+            if line.startswith('User-Agent:'):
+                user_agent = line.split(':')[1].strip()
+                break
 
-        # Set the headers
-        headers = [
-            b'HTTP/1.1 200 OK',
-            b'Content-Type: text/plain',
-            b'Content-Length: ' + str(len(response_body)).encode(),
-            b'',
-            response_body
-        ]
+        if user_agent:
+            response_body = user_agent.encode()
 
-        # Send the response
-        client_socket.send(b'\r\n'.join(headers))
+            # Set the headers
+            headers = [
+                b'HTTP/1.1 200 OK',
+                b'Content-Type: text/plain',
+                b'Content-Length: ' + str(len(response_body)).encode(),
+                b'',
+                response_body
+            ]
+
+            # Send the response
+            client_socket.send(b'\r\n'.join(headers))
+        else:
+            client_socket.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
     elif path == '/':
         response_body = b'Hello, World!'
 
