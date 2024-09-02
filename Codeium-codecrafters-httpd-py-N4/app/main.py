@@ -7,17 +7,13 @@ def main():
 
     # Uncomment this to pass the first stage
     #
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-
-    conn, addr = server_socket.accept()
-    request = conn.recv(1024)
-    if b"GET /" in request:
-        conn.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+    request_str = request.decode()
+    if request_str.startswith("GET /echo/"):
+        response_str = request_str[12:request_str.find(" ", 12)]
+        conn.sendall(f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(response_str)}\r\n\r\n{response_str}".encode())
     else:
         conn.sendall(b'HTTP/1.1 404 Not Found\r\n\r\n')
     conn.close()
-
-    server_socket.close() # close the server
 
 
 if __name__ == "__main__":
