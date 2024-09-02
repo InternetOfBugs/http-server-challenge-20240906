@@ -10,8 +10,19 @@ def main():
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
     client_socket, client_address = server_socket.accept()  # wait for client
 
-    # return 'HTTP/1.1 200 OK\r\n\r\n' to the client
-    client_socket.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+    # Parse the request to get the path
+    request = client_socket.recv(1024).decode('utf-8')
+    request_line = request.split('\n')[0]
+    path = request_line.split()[1]
+
+    # Prepare the response based on the path
+    if path == '/':
+        response = b'HTTP/1.1 200 OK\r\n\r\n'
+    else:
+        response = b'HTTP/1.1 404 Not Found\r\n\r\n'
+
+    # Send the response to the client
+    client_socket.sendall(response)
     client_socket.close()
     server_socket.close()
     
