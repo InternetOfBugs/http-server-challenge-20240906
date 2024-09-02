@@ -9,7 +9,7 @@ def main():
     
     if client_address[1] == 4221:
         request = client_socket.recv(1024).decode()
-        request_lines = request.split('\r\n')
+        request_lines = request.split('\n')
         path = request_lines[0].split()[1]  # Extract the path from the request
         if path == '/':
             client_socket.send(b'HTTP/1.1 200 OK\r\n\r\n')
