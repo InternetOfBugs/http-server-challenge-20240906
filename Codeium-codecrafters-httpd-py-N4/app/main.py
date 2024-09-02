@@ -11,7 +11,9 @@ def main():
 
     conn, addr = server_socket.accept()
     request = conn.recv(1024)
-    if b"GET /echo/" in request:
+    if request.startswith(b"GET / "):
+        conn.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+    elif b"GET /echo/" in request:
         string = request.split()[1].split(b"/echo/")[1]
         conn.sendall(b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ' + bytes(str(len(string)), 'utf-8') + b'\r\n\r\n' + string)
     else:
