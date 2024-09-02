@@ -1,11 +1,8 @@
 import socket  # noqa: F401
+import threading
 
 
-def main():
-    print("Logs from your program will appear here!")
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-
-    client_socket, _ = server_socket.accept()  # wait for client
+def handle_client(client_socket):
     try:
         data = client_socket.recv(1024).decode("utf-8")
         request_line, rest = data.split("\r\n", 1)
@@ -40,6 +37,15 @@ def main():
         print(e)
     finally:
         client_socket.close()
+
+
+def main():
+    print("Logs from your program will appear here!")
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+
+    while True:
+        client_socket, _ = server_socket.accept()  # wait for client
+        threading.Thread(target=handle_client, args=(client_socket,)).start()
 
 
 if __name__ == "__main__":
