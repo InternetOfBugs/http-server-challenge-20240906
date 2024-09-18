@@ -4,7 +4,7 @@ import os
 import argparse
 from urllib.parse import unquote
 
-def handle_client(client_connection, client_address, directory):
+def handle_client(client_connection, client_address, directory=None):
     # Handle the client connection
     with client_connection:
         try:
@@ -72,7 +72,7 @@ def handle_client(client_connection, client_address, directory):
                         "\r\n"
                     )
                     response = response_headers.encode('utf-8') + response_body
-                elif path.startswith('/files/'):
+                elif directory and path.startswith('/files/'):
                     # Extract the filename
                     filename = path[len('/files/'):]
                     # URL-decode the filename
@@ -109,6 +109,9 @@ def handle_client(client_connection, client_address, directory):
                             else:
                                 # File not found
                                 response = b"HTTP/1.1 404 Not Found\r\n\r\n"
+                elif path.startswith('/files/'):
+                    # directory not provided, cannot serve files
+                    response = b"HTTP/1.1 404 Not Found\r\n\r\n"
                 else:
                     response = b"HTTP/1.1 404 Not Found\r\n\r\n"
             else:
@@ -128,7 +131,7 @@ def main():
     import argparse
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Simple HTTP Server')
-    parser.add_argument('--directory', required=True, help='Directory where the files are stored')
+    parser.add_argument('--directory', help='Directory where the files are stored')
     args = parser.parse_args()
 
     directory = args.directory
@@ -145,4 +148,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
