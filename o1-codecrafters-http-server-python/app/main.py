@@ -1,5 +1,89 @@
 import socket  # noqa: F401
+import threading
 from urllib.parse import unquote
+
+def handle_client(client_connection, client_address):
+    # Handle the client connection
+    with client_connection:
+        try:
+            # Read the request until the end of headers (\r\n\r\n)
+            request_data = b""
+            while True:
+                chunk = client_connection.recv(1024)
+                if not chunk:
+                    break  # No more data from client
+                request_data += chunk
+                if b"\r\n\r\n" in request_data:
+                    break  # End of headers
+
+            # Decode the request from bytes to string
+            request_str = request_data.decode('utf-8')
+            # Split the request into lines
+            request_lines = request_str.split('\r\n')
+            # Get the request line (first line)
+            request_line = request_lines[0]
+            # Split the request line into its components
+            request_parts = request_line.split(' ')
+            if len(request_parts) >= 2:
+                method, path = request_parts[0], request_parts[1]
+                # Initialize headers dictionary
+                headers = {}
+                # Process the headers
+                for header_line in request_lines[1:]:
+                    if header_line == '':
+                        break  # End of headers
+                    header_parts = header_line.split(':', 1)
+                    if len(header_parts) == 2:
+                        header_name = header_parts[0].strip().lower()
+                        header_value = header_parts[1].strip()
+                        headers[header_name] = header_value
+                # Check the path
+                if path == '/':
+                    response = b"HTTP/1.1 200 OK\r\n\r\n"
+                elif path.startswith('/echo/'):
+                    # Extract the string after '/echo/'
+                    echo_str = path[len('/echo/'):]
+                    # URL-decode the string
+                    echo_str = unquote(echo_str)
+                    # Encode the response body
+                    response_body = echo_str.encode('utf-8')
+                    content_length = len(response_body)
+                    # Prepare headers
+                    response_headers = (
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: text/plain\r\n"
+                        f"Content-Length: {content_length}\r\n"
+                        "\r\n"
+                    )
+                    response = response_headers.encode('utf-8') + response_body
+                elif path == '/user-agent':
+                    # Get the User-Agent header
+                    user_agent = headers.get('user-agent', '')
+                    # Encode the response body
+                    response_body = user_agent.encode('utf-8')
+                    content_length = len(response_body)
+                    # Prepare headers
+                    response_headers = (
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: text/plain\r\n"
+                        f"Content-Length: {content_length}\r\n"
+                        "\r\n"
+                    )
+                    response = response_headers.encode('utf-8') + response_body
+                else:
+                    response = b"HTTP/1.1 404 Not Found\r\n\r\n"
+            else:
+                # Malformed request
+                response = b"HTTP/1.1 400 Bad Request\r\n\r\n"
+            # Send the HTTP response
+            client_connection.sendall(response)
+        except Exception as e:
+            # In case of any exception, send 500 Internal Server Error
+            error_response = b"HTTP/1.1 500 Internal Server Error\r\n\r\n"
+            client_connection.sendall(error_response)
+        finally:
+            # Close the connection
+            client_connection.close()
 
 def main():
     # You can use print statements as follows; they'll be visible when running tests.
@@ -8,86 +92,9 @@ def main():
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
     while True:
         client_connection, client_address = server_socket.accept()
-        with client_connection:
-            try:
-                # Read the request until the end of headers (\r\n\r\n)
-                request_data = b""
-                while True:
-                    chunk = client_connection.recv(1024)
-                    if not chunk:
-                        break  # No more data from client
-                    request_data += chunk
-                    if b"\r\n\r\n" in request_data:
-                        break  # End of headers
-
-                # Decode the request from bytes to string
-                request_str = request_data.decode('utf-8')
-                # Split the request into lines
-                request_lines = request_str.split('\r\n')
-                # Get the request line (first line)
-                request_line = request_lines[0]
-                # Split the request line into its components
-                request_parts = request_line.split(' ')
-                if len(request_parts) >= 2:
-                    method, path = request_parts[0], request_parts[1]
-                    # Initialize headers dictionary
-                    headers = {}
-                    # Process the headers
-                    for header_line in request_lines[1:]:
-                        if header_line == '':
-                            break  # End of headers
-                        header_parts = header_line.split(':', 1)
-                        if len(header_parts) == 2:
-                            header_name = header_parts[0].strip().lower()
-                            header_value = header_parts[1].strip()
-                            headers[header_name] = header_value
-                    # Check the path
-                    if path == '/':
-                        response = b"HTTP/1.1 200 OK\r\n\r\n"
-                    elif path.startswith('/echo/'):
-                        # Extract the string after '/echo/'
-                        echo_str = path[len('/echo/'):]
-                        # URL-decode the string
-                        echo_str = unquote(echo_str)
-                        # Encode the response body
-                        response_body = echo_str.encode('utf-8')
-                        content_length = len(response_body)
-                        # Prepare headers
-                        response_headers = (
-                            "HTTP/1.1 200 OK\r\n"
-                            "Content-Type: text/plain\r\n"
-                            f"Content-Length: {content_length}\r\n"
-                            "\r\n"
-                        )
-                        response = response_headers.encode('utf-8') + response_body
-                    elif path == '/user-agent':
-                        # Get the User-Agent header
-                        user_agent = headers.get('user-agent', '')
-                        # Encode the response body
-                        response_body = user_agent.encode('utf-8')
-                        content_length = len(response_body)
-                        # Prepare headers
-                        response_headers = (
-                            "HTTP/1.1 200 OK\r\n"
-                            "Content-Type: text/plain\r\n"
-                            f"Content-Length: {content_length}\r\n"
-                            "\r\n"
-                        )
-                        response = response_headers.encode('utf-8') + response_body
-                    else:
-                        response = b"HTTP/1.1 404 Not Found\r\n\r\n"
-                else:
-                    # Malformed request
-                    response = b"HTTP/1.1 400 Bad Request\r\n\r\n"
-                # Send the HTTP response
-                client_connection.sendall(response)
-            except Exception as e:
-                # In case of any exception, send 500 Internal Server Error
-                error_response = b"HTTP/1.1 500 Internal Server Error\r\n\r\n"
-                client_connection.sendall(error_response)
-            finally:
-                # Close the connection
-                client_connection.close()
+        # Start a new thread to handle the client connection
+        client_thread = threading.Thread(target=handle_client, args=(client_connection, client_address))
+        client_thread.start()
 
 if __name__ == "__main__":
     main()
