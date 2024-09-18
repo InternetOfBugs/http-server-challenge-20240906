@@ -1,10 +1,9 @@
+Starting with the code: ```
 import socket  # noqa: F401
 import threading
-import os
-import argparse
 from urllib.parse import unquote
 
-def handle_client(client_connection, client_address, directory):
+def handle_client(client_connection, client_address):
     # Handle the client connection
     with client_connection:
         try:
@@ -19,7 +18,7 @@ def handle_client(client_connection, client_address, directory):
                     break  # End of headers
 
             # Decode the request from bytes to string
-            request_str = request_data.decode('utf-8', errors='replace')
+            request_str = request_data.decode('utf-8')
             # Split the request into lines
             request_lines = request_str.split('\r\n')
             # Get the request line (first line)
@@ -72,43 +71,6 @@ def handle_client(client_connection, client_address, directory):
                         "\r\n"
                     )
                     response = response_headers.encode('utf-8') + response_body
-                elif path.startswith('/files/'):
-                    # Extract the filename
-                    filename = path[len('/files/'):]
-                    # URL-decode the filename
-                    filename = unquote(filename)
-                    # Normalize the filename to prevent directory traversal attacks
-                    filename = os.path.normpath(filename)
-                    # Prevent access to parent directories
-                    if filename.startswith('../') or '/../' in filename or filename.startswith('/'):
-                        # Invalid filename
-                        response = b"HTTP/1.1 403 Forbidden\r\n\r\n"
-                    else:
-                        # Construct the full file path
-                        directory_abs = os.path.abspath(directory)
-                        full_file_path = os.path.abspath(os.path.join(directory_abs, filename))
-                        # Ensure that the full file path is within the directory
-                        if not full_file_path.startswith(directory_abs + os.sep) and full_file_path != directory_abs:
-                            # The file is outside the directory
-                            response = b"HTTP/1.1 403 Forbidden\r\n\r\n"
-                        else:
-                            # Check if the file exists
-                            if os.path.isfile(full_file_path):
-                                # Read the file contents
-                                with open(full_file_path, 'rb') as f:
-                                    file_contents = f.read()
-                                content_length = len(file_contents)
-                                # Prepare headers
-                                response_headers = (
-                                    "HTTP/1.1 200 OK\r\n"
-                                    "Content-Type: application/octet-stream\r\n"
-                                    f"Content-Length: {content_length}\r\n"
-                                    "\r\n"
-                                )
-                                response = response_headers.encode('utf-8') + file_contents
-                            else:
-                                # File not found
-                                response = b"HTTP/1.1 404 Not Found\r\n\r\n"
                 else:
                     response = b"HTTP/1.1 404 Not Found\r\n\r\n"
             else:
@@ -125,14 +87,6 @@ def handle_client(client_connection, client_address, directory):
             client_connection.close()
 
 def main():
-    import argparse
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description='Simple HTTP Server')
-    parser.add_argument('--directory', required=True, help='Directory where the files are stored')
-    args = parser.parse_args()
-
-    directory = args.directory
-
     # You can use print statements as follows; they'll be visible when running tests.
     print("Logs from your program will appear here!")
 
@@ -140,9 +94,46 @@ def main():
     while True:
         client_connection, client_address = server_socket.accept()
         # Start a new thread to handle the client connection
-        client_thread = threading.Thread(target=handle_client, args=(client_connection, client_address, directory))
+        client_thread = threading.Thread(target=handle_client, args=(client_connection, client_address))
         client_thread.start()
 
 if __name__ == "__main__":
     main()
+```
+
+Your Task is to implement the following:
+
+
+In this stage, you'll implement the /files/{filename} endpoint, which returns a requested file to the client.
+Tests
+
+The tester will execute your program with a --directory flag. The --directory flag specifies the directory where the files are stored, as an absolute path.
+
+$ ./your_program.sh --directory /tmp/
+
+The tester will then send two GET requests to the /files/{filename} endpoint on your server.
+First request
+
+The first request will ask for a file that exists in the files directory:
+
+$ echo -n 'Hello, World!' > /tmp/foo
+$ curl -i http://localhost:4221/files/foo
+
+Your server must respond with a 200 response that contains the following parts:
+
+    Content-Type header set to application/octet-stream.
+    Content-Length header set to the size of the file, in bytes.
+    Response body set to the file contents.
+
+HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: 14\r\n\r\nHello, World!
+
+Second request
+
+The second request will ask for a file that doesn't exist in the files directory:
+
+$ curl -i http://localhost:4221/files/non_existant_file
+
+Your server must respond with a 404 response:
+
+HTTP/1.1 404 Not Found\r\n\r\n
 
