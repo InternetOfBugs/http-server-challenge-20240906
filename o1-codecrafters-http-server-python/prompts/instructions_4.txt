@@ -1,3 +1,4 @@
+starting with the code: ```
 import socket  # noqa: F401
 from urllib.parse import unquote
 
@@ -10,18 +11,10 @@ def main():
         client_connection, client_address = server_socket.accept()
         with client_connection:
             try:
-                # Read the request until the end of headers (\r\n\r\n)
-                request_data = b""
-                while True:
-                    chunk = client_connection.recv(1024)
-                    if not chunk:
-                        break  # No more data from client
-                    request_data += chunk
-                    if b"\r\n\r\n" in request_data:
-                        break  # End of headers
-
+                # Read the request
+                request = client_connection.recv(1024)
                 # Decode the request from bytes to string
-                request_str = request_data.decode('utf-8')
+                request_str = request.decode('utf-8')
                 # Split the request into lines
                 request_lines = request_str.split('\r\n')
                 # Get the request line (first line)
@@ -30,17 +23,6 @@ def main():
                 request_parts = request_line.split(' ')
                 if len(request_parts) >= 2:
                     method, path = request_parts[0], request_parts[1]
-                    # Initialize headers dictionary
-                    headers = {}
-                    # Process the headers
-                    for header_line in request_lines[1:]:
-                        if header_line == '':
-                            break  # End of headers
-                        header_parts = header_line.split(':', 1)
-                        if len(header_parts) == 2:
-                            header_name = header_parts[0].strip().lower()
-                            header_value = header_parts[1].strip()
-                            headers[header_name] = header_value
                     # Check the path
                     if path == '/':
                         response = b"HTTP/1.1 200 OK\r\n\r\n"
@@ -51,20 +33,6 @@ def main():
                         echo_str = unquote(echo_str)
                         # Encode the response body
                         response_body = echo_str.encode('utf-8')
-                        content_length = len(response_body)
-                        # Prepare headers
-                        response_headers = (
-                            "HTTP/1.1 200 OK\r\n"
-                            "Content-Type: text/plain\r\n"
-                            f"Content-Length: {content_length}\r\n"
-                            "\r\n"
-                        )
-                        response = response_headers.encode('utf-8') + response_body
-                    elif path == '/user-agent':
-                        # Get the User-Agent header
-                        user_agent = headers.get('user-agent', '')
-                        # Encode the response body
-                        response_body = user_agent.encode('utf-8')
                         content_length = len(response_body)
                         # Prepare headers
                         response_headers = (
@@ -91,4 +59,67 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+```
+
+Your Task is to implement the following:
+
+In this stage, you'll implement the /user-agent endpoint, which reads the User-Agent request header and returns it in the response body.
+The User-Agent header
+
+The User-Agent header describes the client's user agent.
+
+Your /user-agent endpoint must read the User-Agent header, and return it in your response body. Here's an example of a /user-agent request:
+
+// Request line
+GET
+/user-agent
+HTTP/1.1
+\r\n
+
+// Headers
+Host: localhost:4221\r\n
+User-Agent: foobar/1.2.3\r\n  // Read this value
+Accept: */*\r\n
+\r\n
+
+// Request body (empty)
+
+Here is the expected response:
+
+// Status line
+HTTP/1.1 200 OK               // Status code must be 200
+\r\n
+
+// Headers
+Content-Type: text/plain\r\n
+Content-Length: 12\r\n
+\r\n
+
+// Response body
+foobar/1.2.3                  // The value of `User-Agent`
+
+Tests
+
+The tester will execute your program like this:
+
+$ ./your_program.sh
+
+The tester will then send a GET request to the /user-agent endpoint on your server. The request will have a User-Agent header.
+
+$ curl -v --header "User-Agent: foobar/1.2.3" http://localhost:4221/user-agent
+
+Your server must respond with a 200 response that contains the following parts:
+
+    Content-Type header set to text/plain.
+    Content-Length header set to the length of the User-Agent value.
+    Message body set to the User-Agent value.
+
+HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nfoobar/1.2.3
+
+Notes
+
+    Header names are case-insensitive.
+
 
